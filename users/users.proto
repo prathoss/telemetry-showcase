@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package showcase;
+option go_package = "github.com/prathoss/telemetry_showcase/proto/users";
+
+service User {
+  rpc GetUserById(GetUserByIdRequest) returns (UserReply);
+  rpc GetUserByEmail(GetUserByEmailRequest) returns (UserReply);
+}
+
+message GetUserByIdRequest {
+  string id = 1;
+}
+
+message GetUserByEmailRequest {
+  string email = 1;
+}
+
+message UserReply {
+  string id = 1;
+  string firstName = 2;
+  string lastName = 3;
+  string email = 4;
+}

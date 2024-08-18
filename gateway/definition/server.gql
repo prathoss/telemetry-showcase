@@ -1,0 +1,35 @@
+schema {
+    mutation: Mutation
+    query: Query
+}
+
+type Mutation {
+    startRide(bikeId: ID!): RideResponse!
+    endRide(rideId: ID!): RideResponse!
+}
+
+type Query {
+    getUser: UserResponse!
+
+    getBike(id: ID!): BikeResponse!
+}
+
+type BikeResponse {
+    id: ID!
+    imageUrl: String
+}
+
+type UserResponse {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    email: String!
+}
+
+type RideResponse {
+    id: ID!
+    userId: ID!
+    bikeId: ID!
+    startTime: String!
+    endTime: String
+}

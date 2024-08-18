@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package showcase;
+option go_package = "github.com/prathoss/telemetry_showcase/proto/bikes";
+
+import "proto/google/type/latlng.proto";
+
+service Bikes {
+  rpc GetBikeById(GetBikeByIdRequest) returns (BikeReply);
+}
+
+message GetBikeByIdRequest{
+  string id = 1;
+}
+
+message BikeReply {
+  string id = 1;
+  google.type.LatLng location = 2;
+  string imageUrl = 3;
+}
+
+message Location {
+  float latitude = 1;
+  float longitude = 2;
+}
