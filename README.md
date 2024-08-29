@@ -55,3 +55,8 @@ Tracing:
 ## What to look forward to
 
 - [profiling announcement](https://opentelemetry.io/blog/2024/profiling/)
+
+## Configuration
+
+- [Exporter](https://opentelemetry.io/docs/specs/otel/protocol/exporter/)
+- [SDK](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration)

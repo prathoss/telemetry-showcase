@@ -1,0 +1,108 @@
+// LOGS
+loki.write "compose" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
+
+loki.process "default" {
+	forward_to = [
+		loki.write.compose.receiver,
+	]
+
+	stage.json {
+		expressions = {
+			"extracted_level" = "level",
+		}
+	}
+
+	stage.labels {
+		values = {
+			"level" = "extracted_level",
+		}
+	}
+}
+
+discovery.docker "showcase" {
+	host = "unix:///var/run/docker.sock"
+
+	filter {
+		name   = "label"
+		values = [
+			"com.docker.compose.project=telemetry_showcase",
+			"logs.collect=true",
+		]
+	}
+}
+
+loki.source.docker "nodes_attributes" {
+	host       = "unix:///var/run/docker.sock"
+	targets    = discovery.docker.showcase.targets
+	forward_to = [
+		loki.process.default.receiver,
+	]
+	labels = {
+		"project" = "showcase",
+		"app"     = "nodes-attributes",
+		"env"     = "local-compose",
+	}
+}
+
+// METRICS
+prometheus.remote_write "compose" {
+	endpoint {
+		url = "http://prometheus:9090/api/v1/write"
+	}
+}
+
+prometheus.scrape "compose" {
+	targets = [
+		{"__address__" = "tempo:3200"},
+		{"__address__" = "loki:3100"},
+		{"__address__" = "prometheus:9090"},
+	]
+	forward_to      = [prometheus.remote_write.compose.receiver]
+	scrape_interval = "10s"
+}
+
+otelcol.exporter.prometheus "default" {
+	forward_to = [
+		prometheus.remote_write.compose.receiver,
+	]
+}
+
+// TRACES
+otelcol.exporter.otlp "tempo" {
+	client {
+		endpoint = "tempo:4317"
+
+		tls {
+			insecure             = true
+			insecure_skip_verify = true
+		}
+	}
+}
+
+otelcol.processor.batch "default" {
+	output {
+		metrics = [otelcol.exporter.prometheus.default.input]
+		traces  = [otelcol.exporter.otlp.tempo.input]
+	}
+}
+
+otelcol.receiver.otlp "default" {
+	grpc {
+		// default, but to avoid searching in documentation
+		endpoint = "0.0.0.0:4317"
+	}
+
+	http {
+		// default, but to avoid searching in documentation
+		endpoint = "0.0.0.0:4318"
+	}
+
+	output {
+		metrics = [otelcol.processor.batch.default.input]
+		traces  = [otelcol.processor.batch.default.input]
+	}
+}

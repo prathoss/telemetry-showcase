@@ -1,0 +1,56 @@
+include:
+  - compose.yml
+
+services:
+  grafana:
+    image: grafana/grafana:11.2.0
+    volumes:
+      - .docker/grafana/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    volumes:
+      - .docker/grafana/prometheus.yml:/etc/prometheus.yaml
+    command:
+      - "--config.file=/etc/prometheus.yaml"
+      - "--web.enable-remote-write-receiver"
+      - "--enable-feature=exemplar-storage"
+
+  tempo:
+    image: grafana/tempo:2.5.0
+    command: [ "-config.file=/etc/tempo.yaml" ]
+    volumes:
+      - .docker/grafana/tempo.yml:/etc/tempo.yaml
+    depends_on:
+      - prometheus
+
+  loki:
+    image: grafana/loki:3.1.0
+    command: [ "-config.file=/etc/loki.yml" ]
+    volumes:
+      - .docker/grafana/loki.yml:/etc/loki.yml
+
+  alloy:
+    image: grafana/alloy:v1.3.1
+    ports:
+      - '12345:12345'
+      - '4317:4317'
+      - '4318:4318'
+    volumes:
+      - .docker/grafana/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock # for reading logs
+    command:
+      - "run"
+      - "--server.http.listen-addr=0.0.0.0:12345"
+      - "--storage.path=/var/lib/alloy/data"
+      - "/etc/alloy/config.alloy"
+    depends_on:
+      - tempo
+      - prometheus
+      - loki
