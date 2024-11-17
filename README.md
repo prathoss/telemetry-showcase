@@ -37,7 +37,7 @@ Collectors:
 
 Metrics:
 - [x] Runtime
-- [ ] Host
+- [x] Host
 - [x] gRPC
 - [x] GraphQL
 - [ ] BlackBox exporter (alloy)
@@ -54,7 +54,7 @@ Tracing:
 - [x] Kafka
 - [x] Linked traces
 - [ ] Events
-- [ ] Error in span
+- [x] Error in span
 
 ### Sampling
 
@@ -73,3 +73,8 @@ For more information, take a look at [head vs tail sampling](https://opentelemet
 
 - [Exporter](https://opentelemetry.io/docs/specs/otel/protocol/exporter/)
 - [SDK](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration)
+
+### Datadog exporter
+
+Go to file `.docker/datadog/otel-collector.yml:51` and substitute `{{key}}` with your datadog api key.
+
