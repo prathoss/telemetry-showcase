@@ -1,0 +1,39 @@
+syntax = "proto3";
+import "proto/google/type/timestamp.proto";
+
+package showcase;
+option go_package = "github.com/prathoss/telemetry_showcase/proto/rides";
+
+service Rides {
+  rpc StartRide(StartRideRequest) returns (RideReply);
+  rpc EndRide(EndRideRequest) returns (RideReply);
+  rpc GetRide(GetRideRequest) returns (RideReply);
+  rpc SetInvoiceUlr(SetInvoiceUrlRequest) returns (RideReply);
+}
+
+message StartRideRequest {
+  string user_id = 1;
+  string bike_id = 2;
+}
+
+message EndRideRequest {
+  string ride_id = 1;
+}
+
+message GetRideRequest {
+  string ride_id = 1;
+}
+
+message SetInvoiceUrlRequest {
+  string ride_id = 1;
+  string invoice_url = 2;
+}
+
+message RideReply {
+  string id = 1;
+  string user_id = 2;
+  string bike_id = 3;
+  google.protobuf.Timestamp start_time = 4;
+  optional google.protobuf.Timestamp end_time = 5;
+  optional string invoice_url = 6;
+}

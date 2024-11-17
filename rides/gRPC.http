@@ -1,0 +1,11 @@
+### GET request to example server
+GRPC localhost:50052/showcase.Rides/SetInvoiceUlr
+Content-Type: application/json
+
+{
+  "ride_id": "ED293784-09EE-4817-9E79-C6ABEA1443A4",
+  "invoice_url": "abc"
+}
+
+
+###
