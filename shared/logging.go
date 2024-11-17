@@ -5,16 +5,15 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/prathoss/logenricher"
 	"go.opentelemetry.io/otel/trace"
 )
 
 // SetupLogging configures defaults slog logger for uniform logging
 func SetupLogging() {
-	logger := slog.New(&logenricher.SlogHandlerWrapper{
+	logger := slog.New(&SlogHandlerWrapper{
 		Handler: slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
 		// setup logging middleware, when writing logs, check data from context to enrich logs
-		Extractors: []logenricher.Extractor{
+		Extractors: []Extractor{
 			otelLogExtractor,
 		},
 	})
@@ -23,6 +22,29 @@ func SetupLogging() {
 		logger = logger.With(slog.String("service", serviceName))
 	}
 	slog.SetDefault(logger)
+}
+
+type Extractor func(ctx context.Context) []slog.Attr
+
+type SlogHandlerWrapper struct {
+	slog.Handler
+	Extractors []Extractor
+}
+
+func (s *SlogHandlerWrapper) Handle(ctx context.Context, record slog.Record) error {
+	for _, extractor := range s.Extractors {
+		record.AddAttrs(extractor(ctx)...)
+	}
+
+	return s.Handler.Handle(ctx, record)
+}
+
+func (s *SlogHandlerWrapper) WithAttrs(attrs []slog.Attr) slog.Handler {
+	w := s.Handler.WithAttrs(attrs)
+	return &SlogHandlerWrapper{
+		Handler:    w,
+		Extractors: s.Extractors,
+	}
 }
 
 // otelLogExtractor extracts trace id and span id from context, if context does not have span returns empty slice

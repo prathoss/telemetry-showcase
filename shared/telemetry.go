@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -31,6 +32,7 @@ func SetupTelemetry() (func(), func(), error) {
 		ctx,
 		resource.WithFromEnv(),
 		resource.WithContainer(),
+		resource.WithTelemetrySDK(),
 	)
 
 	if errors.Is(err, resource.ErrPartialResource) || errors.Is(err, resource.ErrSchemaURLConflict) {
@@ -45,11 +47,11 @@ func SetupTelemetry() (func(), func(), error) {
 		return nil, nil, fmt.Errorf("could not create trace exporter: %w", err)
 	}
 	tracerProvider := trace.NewTracerProvider(
-		trace.WithSampler(trace.AlwaysSample()),
 		trace.WithBatcher(traceExporter),
 		trace.WithResource(rs),
 	)
 	otel.SetTracerProvider(tracerProvider)
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(propagation.TraceContext{}, propagation.Baggage{}))
 
 	// prepare metrics with grpc otlp exporter
 	metricExporter, err := otlpmetricgrpc.New(ctx)
