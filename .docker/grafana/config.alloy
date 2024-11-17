@@ -10,15 +10,17 @@ loki.process "default" {
 		loki.write.compose.receiver,
 	]
 
-	stage.json {
-		expressions = {
+	stage.logfmt {
+		mapping = {
 			"extracted_level" = "level",
+			"extracted_service" = "service",
 		}
 	}
 
 	stage.labels {
 		values = {
 			"level" = "extracted_level",
+			"service" = "extracted_service",
 		}
 	}
 }
@@ -35,7 +37,7 @@ discovery.docker "showcase" {
 	}
 }
 
-loki.source.docker "nodes_attributes" {
+loki.source.docker "telemetry_showcase" {
 	host       = "unix:///var/run/docker.sock"
 	targets    = discovery.docker.showcase.targets
 	forward_to = [
@@ -43,7 +45,6 @@ loki.source.docker "nodes_attributes" {
 	]
 	labels = {
 		"project" = "showcase",
-		"app"     = "nodes-attributes",
 		"env"     = "local-compose",
 	}
 }
