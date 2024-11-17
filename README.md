@@ -2,13 +2,17 @@
 
 ```mermaid
 flowchart LR
-    gql --> users
-    gql --> bikes
+    gateway --> users
+    gateway --> bikes
+    gateway --> rides
     users --> redis
     redis --> pg
     bikes --> redis
-    bikes --> kafka
-    kafka --> invoices
+    bikes --> pg
+    rides --> kafka
+    rides --> bikes
+    rides --> pg
+    kafka <--> invoices
 ```
 
 Simple setup of services:
@@ -25,32 +29,41 @@ analyse and visualise telemetry data.
 ## Requirements
 
 Collectors:
-- [ ] Grafana showcase
+- [x] Grafana showcase
 - [ ] ELK stack showcase
 - [ ] AWS showcase
-- [ ] DataDog showcase
+- [x] DataDog showcase
 - [ ] Maybe more
 
 Metrics:
-- [ ] Runtime
+- [x] Runtime
 - [ ] Host
-- [ ] gRPC
-- [ ] GraphQL
+- [x] gRPC
+- [x] GraphQL
 - [ ] BlackBox exporter (alloy)
-- [ ] Redis exporter (alloy)
-- [ ] Kafka exporter (alloy)
-- [ ] Postgres exporter (alloy)
+- [x] Redis exporter (alloy)
+- [x] Kafka exporter (alloy)
+- [x] Postgres exporter (alloy)
 
 Tracing:
-- [ ] gRPC
-- [ ] GraphQL
-- [ ] Custom (simple)
-- [ ] Redis
-- [ ] Gorm
-- [ ] Kafka
-- [ ] Linked traces
+- [x] gRPC
+- [x] GraphQL
+- [x] Custom (simple)
+- [x] Redis
+- [x] Gorm
+- [x] Kafka
+- [x] Linked traces
 - [ ] Events
 - [ ] Error in span
+
+### Sampling
+
+It is possible to use a rate-based collection in SDK, but it is quite simple
+and may skip information which is important for situation assessment, this rating may discard, for example,
+trace with error.
+Advanced sampling should be configured at agent or collector which will have more information
+about the whole trace.
+For more information, take a look at [head vs tail sampling](https://opentelemetry.io/docs/concepts/sampling/#head-sampling).
 
 ## What to look forward to
 
