@@ -4,9 +4,9 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/prathoss/telemetry_showcase/shared"
 	"github.com/prathoss/telemetry_showcase/users/config"
 	"github.com/prathoss/telemetry_showcase/users/service"
-	"shared"
 )
 
 func main() {

@@ -5,9 +5,9 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/prathoss/telemetry_showcase/shared"
 	"github.com/prathoss/telemetry_showcase/users/dao"
 	"gorm.io/gorm"
-	"shared"
 )
 
 type Repository interface {
