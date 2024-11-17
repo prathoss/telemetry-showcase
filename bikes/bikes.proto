@@ -7,6 +7,9 @@ import "proto/google/type/latlng.proto";
 
 service Bikes {
   rpc GetBikeById(GetBikeByIdRequest) returns (BikeReply);
+  rpc ListBikes(google.type.LatLng) returns (ListBikesReply);
+  rpc SetBikeReserved(SetBikeReservedRequest) returns (SetBikeReservedReply);
+  rpc SetBikeAvailable(SetBikeAvailableRequest) returns (SetBikeAvailableReply);
 }
 
 message GetBikeByIdRequest{
@@ -19,7 +22,18 @@ message BikeReply {
   string imageUrl = 3;
 }
 
-message Location {
-  float latitude = 1;
-  float longitude = 2;
+message ListBikesReply {
+  repeated BikeReply bikes = 1;
 }
+
+message SetBikeReservedRequest {
+  string id = 1;
+}
+
+message SetBikeReservedReply {}
+
+message SetBikeAvailableRequest {
+  string id = 1;
+}
+
+message SetBikeAvailableReply {}

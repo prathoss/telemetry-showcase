@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"os"
 
 	"github.com/prathoss/telemetry_showcase/bikes/config"
 	"github.com/prathoss/telemetry_showcase/bikes/service"
@@ -18,8 +19,19 @@ func main() {
 		defer metricsShutdown()
 	}
 
-	cfg := config.NewConfig()
-	s := service.New(cfg)
+	cfg, err := config.NewConfig()
+	if err != nil {
+		slog.Error("couldn't setup config", shared.Err(err))
+		os.Exit(1)
+		return
+	}
+
+	s, err := service.New(cfg)
+	if err != nil {
+		slog.Error("couldn't setup service", shared.Err(err))
+		os.Exit(1)
+		return
+	}
 	if err := s.Run(); err != nil {
 		slog.Error("could not run service", shared.Err(err))
 	}
