@@ -2,51 +2,135 @@ include:
   - compose.deps.yml
 
 services:
+
   gateway:
     build:
-      context: gateway
+      context: .
+      dockerfile: gateway/Dockerfile
     labels:
       # allow log collection with alloy
       logs.collect: true
+    ports:
+      - "8080:8080"
     environment:
       SERVICE_ADDRESS: ":8080"
+      USERS_ADDRESS: "users:50050"
+      BIKES_ADDRESS: "bikes:50051"
+      RIDES_ADDRESS: "rides:50052"
 
       OTEL_SERVICE_NAME: gateway
+      OTEL_TRACES_SAMPLER: parentbased_always_on # default
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_EXPORTER_OTLP_INSECURE: true
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio # default
+      # OTEL_TRACES_SAMPLER_ARG: 0.1 # sample ratio [0..1]
       OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=local"
+
 
   users:
     build:
-      context: users
+      context: .
+      dockerfile: users/Dockerfile
     labels:
       # allow log collection with alloy
       logs.collect: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "50050:50050"
     environment:
       GRPC_SERVICE_ADDRESS: ":50050"
-      DB_CONNECTION_STRING: "postgres://postgres:localDb123@localhost:5432"
-      REDIS_ADDRESSES: "localhost:6379"
+      DB_CONNECTION_STRING: "postgres://postgres:localDb123@postgres:5432/postgres"
+      REDIS_ADDRESSES: "redis:6379"
 
+      OTEL_SDK_DISABLED: true
       OTEL_SERVICE_NAME: users
+      OTEL_TRACES_SAMPLER: parentbased_always_on # default
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_EXPORTER_OTLP_INSECURE: true
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio # default
+      # OTEL_TRACES_SAMPLER_ARG: 0.1 # sample ratio [0..1]
       OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=local"
 
   bikes:
     build:
-      context: bikes
+      context: .
+      dockerfile: bikes/Dockerfile
     labels:
       # allow log collection with alloy
       logs.collect: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      SERVICE_ADDRESS: "grpc:50051"
+      GRPC_SERVICE_ADDRESS: ":50051"
+      DB_CONNECTION_STRING: "postgres://postgres:localDb123@postgres:5432/postgres"
+      REDIS_ADDRESSES: "redis:6379"
 
       OTEL_SERVICE_NAME: bikes
+      OTEL_TRACES_SAMPLER: parentbased_always_on # default
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_EXPORTER_OTLP_INSECURE: true
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio # default
+      # OTEL_TRACES_SAMPLER_ARG: 0.1 # sample ratio [0..1]
+      OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=local"
+
+  rides:
+    build:
+      context: .
+      dockerfile: rides/Dockerfile
+    labels:
+      # allow log collection with alloy
+      logs.collect: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "50052:50052"
+    environment:
+      GRPC_SERVICE_ADDRESS: ":50052"
+      BIKES_ADDRESS: "bikes:50051"
+      DB_CONNECTION_STRING: "postgres://postgres:localDb123@postgres:5432/postgres"
+      KAFKA_BROKERS: "kafka:9092"
+
+      OTEL_SERVICE_NAME: rides
+      OTEL_TRACES_SAMPLER: parentbased_always_on # default
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_EXPORTER_OTLP_INSECURE: true
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio # default
+      # OTEL_TRACES_SAMPLER_ARG: 0.1 # sample ratio [0..1]
       OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=local"
 
   invoices:
     build:
-      context: invoices
+      context: .
+      dockerfile: invoices/Dockerfile
     labels:
       # allow log collection with alloy
       logs.collect: true
+    depends_on:
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
+      KAFKA_BROKERS: "kafka:9092"
+      REDIS_ADDRESSES: "redis:6379"
+      RIDES_ADDRESS: "rides:50052"
 
       OTEL_SERVICE_NAME: invoices
+      OTEL_TRACES_SAMPLER: parentbased_always_on # default
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_EXPORTER_OTLP_INSECURE: true
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio # default
+      # OTEL_TRACES_SAMPLER_ARG: 0.1 # sample ratio [0..1]
       OTEL_RESOURCE_ATTRIBUTES: "deployment.environment=local"

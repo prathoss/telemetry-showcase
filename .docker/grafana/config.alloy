@@ -62,9 +62,9 @@ prometheus.scrape "compose" {
 		{"__address__" = "loki:3100"},
 		{"__address__" = "prometheus:9090"},
 	],
-		prometheus.exporter.redis.docker.targets,
-		prometheus.exporter.postgres.docker.targets,
-		prometheus.exporter.kafka.docker.targets,
+	prometheus.exporter.redis.docker.targets,
+	prometheus.exporter.postgres.docker.targets,
+	prometheus.exporter.kafka.docker.targets,
 	)
 	forward_to      = [prometheus.remote_write.compose.receiver]
 	scrape_interval = "10s"

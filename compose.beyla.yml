@@ -1,0 +1,23 @@
+include:
+  - compose.grafana.yml
+
+services:
+
+  beyla:
+    image: grafana/beyla:latest
+    pid: "service:users"
+    privileged: true
+    depends_on:
+      - alloy
+    environment:
+      BEYLA_TRACE_PRINTER: text
+      BEYLA_OPEN_PORT: 8443
+
+      OTEL_SERVICE_NAME: users
+
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+      OTEL_EXPORTER_OTLP_INSECURE: true
+
+      OTEL_TRACES_SAMPLER: parentbased_always_on
+      # OTEL_TRACES_SAMPLER: parentbased_traceidratio # default
+      # OTEL_TRACES_SAMPLER_ARG: 0.1

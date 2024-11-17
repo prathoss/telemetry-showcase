@@ -1,5 +1,5 @@
 include:
-  - compose.yml
+  - compose.deps.yml
 
 services:
   grafana:
@@ -37,7 +37,7 @@ services:
       - .docker/grafana/loki.yml:/etc/loki.yml
 
   alloy:
-    image: grafana/alloy:v1.3.1
+    image: grafana/alloy:v1.5.0
     ports:
       - '12345:12345'
       - '4317:4317'
@@ -54,3 +54,49 @@ services:
       - tempo
       - prometheus
       - loki
+
+  gateway:
+    extends:
+      service: gateway
+      file: compose.yml
+    depends_on:
+      - alloy
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+
+
+  users:
+    extends:
+      service: users
+      file: compose.yml
+    depends_on:
+      - alloy
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+
+  bikes:
+    extends:
+      service: bikes
+      file: compose.yml
+    depends_on:
+      - alloy
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+
+  rides:
+    extends:
+      service: rides
+      file: compose.yml
+    depends_on:
+      - alloy
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
+
+  invoices:
+    extends:
+      service: invoices
+      file: compose.yml
+    depends_on:
+      - alloy
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://alloy:4317
