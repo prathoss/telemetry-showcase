@@ -5,13 +5,16 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/prathoss/telemetry_showcase/gateway/config"
+	"github.com/prathoss/telemetry_showcase/gateway/middleware"
 	"github.com/prathoss/telemetry_showcase/gateway/server"
 	"github.com/prathoss/telemetry_showcase/gateway/server/resolver"
 	"github.com/prathoss/telemetry_showcase/shared"
@@ -28,10 +31,25 @@ func main() {
 		defer metricsShutdown()
 	}
 
-	cfg := config.NewConfig()
+	cfg, err := config.NewConfig()
+	if err != nil {
+		slog.Error("couldn't setup config", shared.Err(err))
+		os.Exit(1)
+		return
+	}
 
-	srv := handler.NewDefaultServer(server.NewExecutableSchema(server.Config{Resolvers: &resolver.Resolver{}}))
-	srv.Use(otelgqlgen.Middleware())
+	res, err := resolver.New(cfg)
+	if err != nil {
+		slog.Error("couldn't setup resolver", shared.Err(err))
+		os.Exit(1)
+		return
+	}
+
+	srv := handler.NewDefaultServer(server.NewExecutableSchema(server.Config{Resolvers: res}))
+	srv.Use(otelgqlgen.Middleware(otelgqlgen.WithCreateSpanFromFields(func(ctx *graphql.FieldContext) bool {
+		return false
+	})))
+	srv.Use(&shared.GraphqlLogger{})
 
 	mux := http.NewServeMux()
 	mux.Handle("/", playground.Handler("GraphQL playground", "/query"))
@@ -39,7 +57,7 @@ func main() {
 
 	s := http.Server{
 		Addr:              cfg.Address,
-		Handler:           mux,
+		Handler:           middleware.UserMiddleware(mux),
 		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 1 * time.Second,
 		WriteTimeout:      10 * time.Second,

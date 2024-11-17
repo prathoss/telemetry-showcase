@@ -12,11 +12,19 @@ type Query {
     getUser: UserResponse!
 
     getBike(id: ID!): BikeResponse!
+    listBikes(req: ListBikesRequest!): [BikeResponse]!
+}
+
+input ListBikesRequest {
+    lat: Float!
+    lon: Float!
 }
 
 type BikeResponse {
     id: ID!
-    imageUrl: String
+    lat: Float!
+    lon: Float!
+    imageUrl: String!
 }
 
 type UserResponse {

@@ -50,6 +50,8 @@ type ComplexityRoot struct {
 	BikeResponse struct {
 		ID       func(childComplexity int) int
 		ImageURL func(childComplexity int) int
+		Lat      func(childComplexity int) int
+		Lon      func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -58,8 +60,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetBike func(childComplexity int, id uuid.UUID) int
-		GetUser func(childComplexity int) int
+		GetBike   func(childComplexity int, id uuid.UUID) int
+		GetUser   func(childComplexity int) int
+		ListBikes func(childComplexity int, req model.ListBikesRequest) int
 	}
 
 	RideResponse struct {
@@ -85,6 +88,7 @@ type MutationResolver interface {
 type QueryResolver interface {
 	GetUser(ctx context.Context) (*model.UserResponse, error)
 	GetBike(ctx context.Context, id uuid.UUID) (*model.BikeResponse, error)
+	ListBikes(ctx context.Context, req model.ListBikesRequest) ([]*model.BikeResponse, error)
 }
 
 type executableSchema struct {
@@ -119,6 +123,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.BikeResponse.ImageURL(childComplexity), true
+
+	case "BikeResponse.lat":
+		if e.complexity.BikeResponse.Lat == nil {
+			break
+		}
+
+		return e.complexity.BikeResponse.Lat(childComplexity), true
+
+	case "BikeResponse.lon":
+		if e.complexity.BikeResponse.Lon == nil {
+			break
+		}
+
+		return e.complexity.BikeResponse.Lon(childComplexity), true
 
 	case "Mutation.endRide":
 		if e.complexity.Mutation.EndRide == nil {
@@ -162,6 +180,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetUser(childComplexity), true
+
+	case "Query.listBikes":
+		if e.complexity.Query.ListBikes == nil {
+			break
+		}
+
+		args, err := ec.field_Query_listBikes_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ListBikes(childComplexity, args["req"].(model.ListBikesRequest)), true
 
 	case "RideResponse.bikeId":
 		if e.complexity.RideResponse.BikeID == nil {
@@ -233,7 +263,9 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
-	inputUnmarshalMap := graphql.BuildUnmarshalerMap()
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputListBikesRequest,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -344,11 +376,19 @@ type Query {
     getUser: UserResponse!
 
     getBike(id: ID!): BikeResponse!
+    listBikes(req: ListBikesRequest!): [BikeResponse!]!
+}
+
+input ListBikesRequest {
+    lat: Float!
+    lon: Float!
 }
 
 type BikeResponse {
     id: ID!
-    imageUrl: String
+    lat: Float!
+    lon: Float!
+    imageUrl: String!
 }
 
 type UserResponse {
@@ -430,6 +470,21 @@ func (ec *executionContext) field_Query_getBike_args(ctx context.Context, rawArg
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_listBikes_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ListBikesRequest
+	if tmp, ok := rawArgs["req"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("req"))
+		arg0, err = ec.unmarshalNListBikesRequest2githubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐListBikesRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["req"] = arg0
 	return args, nil
 }
 
@@ -515,6 +570,94 @@ func (ec *executionContext) fieldContext_BikeResponse_id(_ context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _BikeResponse_lat(ctx context.Context, field graphql.CollectedField, obj *model.BikeResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BikeResponse_lat(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lat, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BikeResponse_lat(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BikeResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BikeResponse_lon(ctx context.Context, field graphql.CollectedField, obj *model.BikeResponse) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BikeResponse_lon(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lon, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BikeResponse_lon(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BikeResponse",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BikeResponse_imageUrl(ctx context.Context, field graphql.CollectedField, obj *model.BikeResponse) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BikeResponse_imageUrl(ctx, field)
 	if err != nil {
@@ -536,11 +679,14 @@ func (ec *executionContext) _BikeResponse_imageUrl(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BikeResponse_imageUrl(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -785,6 +931,10 @@ func (ec *executionContext) fieldContext_Query_getBike(ctx context.Context, fiel
 			switch field.Name {
 			case "id":
 				return ec.fieldContext_BikeResponse_id(ctx, field)
+			case "lat":
+				return ec.fieldContext_BikeResponse_lat(ctx, field)
+			case "lon":
+				return ec.fieldContext_BikeResponse_lon(ctx, field)
 			case "imageUrl":
 				return ec.fieldContext_BikeResponse_imageUrl(ctx, field)
 			}
@@ -799,6 +949,71 @@ func (ec *executionContext) fieldContext_Query_getBike(ctx context.Context, fiel
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getBike_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_listBikes(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_listBikes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ListBikes(rctx, fc.Args["req"].(model.ListBikesRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.BikeResponse)
+	fc.Result = res
+	return ec.marshalNBikeResponse2ᚕᚖgithubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐBikeResponseᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_listBikes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BikeResponse_id(ctx, field)
+			case "lat":
+				return ec.fieldContext_BikeResponse_lat(ctx, field)
+			case "lon":
+				return ec.fieldContext_BikeResponse_lon(ctx, field)
+			case "imageUrl":
+				return ec.fieldContext_BikeResponse_imageUrl(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BikeResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_listBikes_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -3100,6 +3315,40 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(_ context.Context
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputListBikesRequest(ctx context.Context, obj interface{}) (model.ListBikesRequest, error) {
+	var it model.ListBikesRequest
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"lat", "lon"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "lat":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lat"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lat = data
+		case "lon":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("lon"))
+			data, err := ec.unmarshalNFloat2float64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Lon = data
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -3124,8 +3373,21 @@ func (ec *executionContext) _BikeResponse(ctx context.Context, sel ast.Selection
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "lat":
+			out.Values[i] = ec._BikeResponse_lat(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "lon":
+			out.Values[i] = ec._BikeResponse_lon(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "imageUrl":
 			out.Values[i] = ec._BikeResponse_imageUrl(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -3256,6 +3518,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getBike(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "listBikes":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_listBikes(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -3739,6 +4023,50 @@ func (ec *executionContext) marshalNBikeResponse2githubᚗcomᚋprathossᚋtelem
 	return ec._BikeResponse(ctx, sel, &v)
 }
 
+func (ec *executionContext) marshalNBikeResponse2ᚕᚖgithubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐBikeResponseᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BikeResponse) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBikeResponse2ᚖgithubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐBikeResponse(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNBikeResponse2ᚖgithubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐBikeResponse(ctx context.Context, sel ast.SelectionSet, v *model.BikeResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -3764,6 +4092,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloatContext(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return graphql.WrapContextMarshaler(ctx, res)
+}
+
 func (ec *executionContext) unmarshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
 	res, err := graphql.UnmarshalUUID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3777,6 +4120,11 @@ func (ec *executionContext) marshalNID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx c
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNListBikesRequest2githubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐListBikesRequest(ctx context.Context, v interface{}) (model.ListBikesRequest, error) {
+	res, err := ec.unmarshalInputListBikesRequest(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNRideResponse2githubᚗcomᚋprathossᚋtelemetry_showcaseᚋgatewayᚋserverᚋmodelᚐRideResponse(ctx context.Context, sel ast.SelectionSet, v model.RideResponse) graphql.Marshaler {

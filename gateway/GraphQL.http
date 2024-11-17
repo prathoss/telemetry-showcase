@@ -1,0 +1,70 @@
+### Get User
+GRAPHQL http://localhost:8080/query
+X-User-ID: bcf63524-5a1b-402a-9be2-2f463ce18cee
+
+query user {
+    getUser {
+        id,
+        email,
+        firstName,
+        lastName,
+    }
+}
+
+### Query land
+GRAPHQL http://localhost:8080/query
+X-User-ID: bcf63524-5a1b-402a-9be2-2f463ce18cee
+
+query map ($listBikesReq: ListBikesRequest!){
+    getUser {
+        id,
+        email,
+        firstName,
+        lastName,
+    }
+    listBikes(req: $listBikesReq) {
+        id,
+        imageUrl
+    }
+}
+
+{
+  "listBikesReq": {
+    "lat": 50.067199,
+    "lon": 14.392081
+  }
+}
+
+### Start ride
+GRAPHQL http://localhost:8080/query
+X-User-ID: bcf63524-5a1b-402a-9be2-2f463ce18cee
+
+mutation startRide ($bikeID: ID!) {
+    startRide(bikeId: $bikeID){
+        id
+        bikeId
+        userId
+        startTime
+    }
+}
+
+{
+  "bikeID": "18c26301-d441-4f8b-9cc0-f3bd0eddbda7"
+}
+
+### End ride
+GRAPHQL http://localhost:8080/query
+X-User-ID: bcf63524-5a1b-402a-9be2-2f463ce18cee
+
+mutation endRide ($rideID: ID!) {
+    endRide(rideId: $rideID) {
+        id
+        bikeId
+        startTime
+        endTime
+    }
+}
+
+{
+  "rideID": "0dffa57a-a817-44f3-8bf4-1487cbd39de3"
+}

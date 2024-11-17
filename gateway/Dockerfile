@@ -1,27 +1,33 @@
-FROM golang:alpine3.17 as deps
+FROM golang:1.23-alpine3.20 AS deps
 
 RUN apk update && apk add --no-cache git ca-certificates
 
-FROM deps as pkgs
+FROM deps AS pkgs
 
-WORKDIR /app
+WORKDIR /build/app
 
-COPY go.mod ./
-COPY go.sum ./
+COPY gateway/go.mod ./gateway/
+COPY gateway/go.sum ./gateway/
+COPY shared/go.mod ./shared/
+COPY shared/go.sum ./shared/
+COPY proto/go.mod ./proto/
+COPY proto/go.sum ./proto/
 
-RUN go mod download
+RUN cd gateway && go mod download
 
-FROM pkgs as builder
+FROM pkgs AS builder
 
-COPY . .
+COPY gateway gateway
+COPY shared shared
+COPY proto proto
 
-RUN go build -o /build/app .
+RUN cd gateway && go build -o /app/app .
 
-FROM scratch as runner
+FROM scratch AS runner
 
 WORKDIR /app
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /build/app ./
+COPY --from=builder /app/app ./
 
 ENTRYPOINT ["/app/app"]

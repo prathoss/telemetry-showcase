@@ -8,7 +8,14 @@ import (
 
 type BikeResponse struct {
 	ID       uuid.UUID `json:"id"`
-	ImageURL *string   `json:"imageUrl,omitempty"`
+	Lat      float64   `json:"lat"`
+	Lon      float64   `json:"lon"`
+	ImageURL string    `json:"imageUrl"`
+}
+
+type ListBikesRequest struct {
+	Lat float64 `json:"lat"`
+	Lon float64 `json:"lon"`
 }
 
 type Mutation struct {
