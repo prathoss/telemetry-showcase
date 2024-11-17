@@ -6,6 +6,8 @@ services:
     image: grafana/grafana:11.2.0
     volumes:
       - .docker/grafana/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - .docker/grafana/dashboard-provider.yml:/etc/grafana/provisioning/dashboards/main.yaml
+      - .docker/grafana/dashboards:/var/lib/grafana/dashboards
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
@@ -51,9 +53,16 @@ services:
       - "--storage.path=/var/lib/alloy/data"
       - "/etc/alloy/config.alloy"
     depends_on:
-      - tempo
-      - prometheus
-      - loki
+      tempo:
+        condition: service_started
+      prometheus:
+        condition: service_started
+      loki:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   gateway:
     extends:
