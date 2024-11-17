@@ -12,14 +12,14 @@ loki.process "default" {
 
 	stage.logfmt {
 		mapping = {
-			"extracted_level" = "level",
+			"extracted_level"   = "level",
 			"extracted_service" = "service",
 		}
 	}
 
 	stage.labels {
 		values = {
-			"level" = "extracted_level",
+			"level"   = "extracted_level",
 			"service" = "extracted_service",
 		}
 	}
@@ -57,11 +57,15 @@ prometheus.remote_write "compose" {
 }
 
 prometheus.scrape "compose" {
-	targets = [
+	targets = array.concat([
 		{"__address__" = "tempo:3200"},
 		{"__address__" = "loki:3100"},
 		{"__address__" = "prometheus:9090"},
-	]
+	],
+		prometheus.exporter.redis.docker.targets,
+		prometheus.exporter.postgres.docker.targets,
+		prometheus.exporter.kafka.docker.targets,
+	)
 	forward_to      = [prometheus.remote_write.compose.receiver]
 	scrape_interval = "10s"
 }
@@ -106,4 +110,17 @@ otelcol.receiver.otlp "default" {
 		metrics = [otelcol.processor.batch.default.input]
 		traces  = [otelcol.processor.batch.default.input]
 	}
+}
+
+// EXPORTERS
+prometheus.exporter.redis "docker" {
+	redis_addr = "redis:6379"
+}
+
+prometheus.exporter.postgres "docker" {
+	data_source_names = ["postgresql://postgres:localDb123@postgres:5432/postgres?sslmode=disable"]
+}
+
+prometheus.exporter.kafka "docker" {
+	kafka_uris = ["kafka:9092"]
 }
